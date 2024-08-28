@@ -42,9 +42,25 @@ app.post('/api/logout', async (req, res) => {
   if (!req.session.userId) {
     res.status(401).json({ error: 'Unauthorized' });
   } else {
-    res.session.destroy();
-    res.json({ success: true })
+    req.session.destroy();
+    res.json({ success: true });
   }
-})
+});
+
+app.get('/api/ratings', async (req, res) => {
+  // If user is not logged in
+  if (!req.session.userId) {
+    res.status(401).json({ error: 'Unauthorized' });
+  } else {
+    const user = await User.findByPk(1);
+    const ratings = await user.getRatings({
+      include: {
+        model: Movie,
+        attributes: ['title'],
+      },
+    });
+    res.json(ratings);
+  };
+});
 
 ViteExpress.listen(app, port, () => console.log(`Server is listening on http://localhost:${port}`));
