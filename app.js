@@ -13,6 +13,14 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(session({ secret: 'ssshhhhh', saveUninitialized: true, resave: false }));
 
+function loginRequired(req, res, next) {
+  if (!req.session.userId) {
+    res.status(401).json({ error: 'Unauthorized' });
+  } else {
+    next();
+  };
+};
+
 app.get('/api/movies', async (req, res) => {
   const allMovies = await Movie.findAll();
   res.json(allMovies);
@@ -38,49 +46,34 @@ app.post('/api/auth', async (req, res) => {
   };
 });
 
-app.post('/api/logout', async (req, res) => {
-  if (!req.session.userId) {
-    res.status(401).json({ error: 'Unauthorized' });
-  } else {
-    req.session.destroy();
-    res.json({ success: true });
-  }
+app.post('/api/logout', loginRequired, (req, res) => {
+  req.session.destroy();
+  res.json({ success: true });
 });
 
-app.get('/api/ratings', async (req, res) => {
-  // If user is not logged in
-  if (!req.session.userId) {
-    res.status(401).json({ error: 'Unauthorized' });
-  } else {
-    const user = await User.findByPk(1);
-    const ratings = await user.getRatings({
-      include: {
-        model: Movie,
-        attributes: ['title'],
-      },
-    });
-    res.json(ratings);
-  };
+app.get('/api/ratings', loginRequired, async (req, res) => {
+  const user = await User.findByPk(1);
+  const ratings = await user.getRatings({
+    include: {
+      model: Movie,
+      attributes: ['title'],
+    },
+  });
+  res.json(ratings);
 });
 
-app.post('/api/ratings', async (req, res) => {
+app.post('/api/ratings', loginRequired, async (req, res) => {
   const { userId } = req.session;
 
-  // If user is not logged in
-  if (!userId) {
-    res.status(401).json({ error: 'Unauthorized' });
-  } else {
-    // Deconstruct variables from req.body
-    const { movieId, score } = req.body;
+  const { movieId, score } = req.body;
 
-    // 
-    const user = await User.findByPk(userId);
-    const rating = await user.createRating({
-      movieId: movieId,
-      score: score,
-    });
-    res.json(rating);
-  };
+  const user = await User.findByPk(userId);
+  const rating = await user.createRating({
+    movieId: movieId,
+    score: score,
+  });
+  
+  res.json(rating);
 });
 
 ViteExpress.listen(app, port, () => console.log(`Server is listening on http://localhost:${port}`));
