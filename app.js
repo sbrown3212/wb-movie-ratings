@@ -63,4 +63,24 @@ app.get('/api/ratings', async (req, res) => {
   };
 });
 
+app.post('/api/ratings', async (req, res) => {
+  const { userId } = req.session;
+
+  // If user is not logged in
+  if (!userId) {
+    res.status(401).json({ error: 'Unauthorized' });
+  } else {
+    // Deconstruct variables from req.body
+    const { movieId, score } = req.body;
+
+    // 
+    const user = await User.findByPk(userId);
+    const rating = await user.createRating({
+      movieId: movieId,
+      score: score,
+    });
+    res.json(rating);
+  };
+});
+
 ViteExpress.listen(app, port, () => console.log(`Server is listening on http://localhost:${port}`));
