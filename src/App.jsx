@@ -5,10 +5,14 @@ import axios from 'axios';
 export default function App() {
   const navigate = useNavigate();
 
+  // Logs out user by doing axios POST request
   const handleLogout = async (e) => {
     e.preventDefault();
 
-    const res = await axios.post('/api/logout', );
+    // Axios POST request to log user out
+    const res = await axios.post('/api/logout');
+
+    // If logout successful, navigate to index
     if (res.data.success) {
       navigate('/');
     }
